@@ -1,0 +1,33 @@
+apiVersion: "training.kubeflow.org/v1"
+kind: "PyTorchJob"
+metadata:
+  name: "slm-smoke-test-juicefs"
+  namespace: kubeflow
+spec:
+  pytorchReplicaSpecs:
+    Master:
+      replicas: 1
+      restartPolicy: OnFailure
+      template:
+        spec:
+          containers:
+            - name: pytorch
+              image: "localhost:32000/slm-smoke-test:v1"
+              resources:
+                limits:
+                  nvidia.com/gpu: "1"
+                  memory: "16Gi"
+                  cpu: "4"
+                volumeMounts:
+                - name: juicefs-models
+                  mountPath: /models/smoketest
+                - name: juicefs-checkpoints
+                  mountPath: /checkpoints/smoketest
+
+          volumes:
+            - name: juicefs-models
+              persistentVolumeClaim:
+                claimName: kubeflow-models
+            - name: juicefs-checkpoints
+              persistentVolumeClaim:
+                claimName: kubeflow-checkpoints
