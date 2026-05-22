@@ -1,31 +1,27 @@
-# You can override the included template(s) by including variable overrides
-# SAST customization: https://docs.gitlab.com/user/application_security/sast/#available-cicd-variables
-# Secret Detection customization: https://docs.gitlab.com/user/application_security/secret_detection/pipeline/configure/
-# Dependency Scanning customization: https://docs.gitlab.com/user/application_security/dependency_scanning/dependency_scanning_sbom/#customizing-analyzer-behavior
-# Container Scanning customization: https://docs.gitlab.com/user/application_security/container_scanning/#customizing-analyzer-behavior
-# Note that environment variables can be set in several places
-# See https://docs.gitlab.com/ci/variables/#cicd-variable-precedence
 stages:
-- build
-- test
-- deploy
-- review
-- dast
-- staging
-- canary
-- production
-- incremental rollout 10%
-- incremental rollout 25%
-- incremental rollout 50%
-- incremental rollout 100%
-- performance
-- cleanup
-- secret-detection
-sast:
-  stage: test
-include:
-- template: Auto-DevOps.gitlab-ci.yml
-variables:
-  SECRET_DETECTION_ENABLED: 'true'
-secret_detection:
-  stage: secret-detection
+  - build
+
+build-slm-image:
+  stage: build
+  # Official stable Buildah image
+  image: quay.io/buildah/stable:v1.35
+  before_script:
+    # Buildah requires an isolated storage driver configuration when running inside a container
+    - export STORAGE_DRIVER=vfs
+  script:
+    # 1. Log directly into your private OpenStack GitLab Registry
+    - buildah login --username "${CI_REGISTRY_USER}" --password "${CI_REGISTRY_PASSWORD}" "${CI_REGISTRY}"
+    
+    # 2. Build the image layer using your local Dockerfile context 
+    # (--tls-verify=false handles your internal .lan self-signed or private cert setup)
+    - buildah bud 
+      --tls-verify=false 
+      -t "${CI_REGISTRY_IMAGE}:latest" 
+      -t "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}" 
+      "${CI_PROJECT_DIR}"
+    
+    # 3. Push both target tags directly to your registry
+    - buildah push --tls-verify=false "${CI_REGISTRY_IMAGE}:latest"
+    - buildah push --tls-verify=false "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"

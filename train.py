@@ -1,81 +1,82 @@
 import os
 import torch
 from datasets import Dataset
-from transformers import AutoTokenizer, AutoModelForCausalLM, TrainingArguments
+from transformers import AutoTokenizer, AutoModelForCausalLM
 from trl import SFTTrainer, SFTConfig
 
-def run_test():
+def run_production_training():
     print("--- STEP 1: Verifying Local GPU Detection ---")
     cuda_available = torch.cuda.is_available()
     print(f"CUDA Available: {cuda_available}")
     if cuda_available:
         print(f"Using GPU: {torch.cuda.get_device_name(0)}")
-    else:
-        print("WARNING: CUDA not found! The pipeline is falling back to CPU.")
+        
+    # --- PRODUCTION PATH MANAGEMENT ---
+    # Instead of hardcoding paths, we read from our mounted PVC directories
+    MODEL_BASE_DIR = "/models"
+    DATASET_BASE_DIR = "/datasets"
+    CHECKPOINT_BASE_DIR = "/checkpoints"
 
-    # 1. Base Model Path
-    model_id = "Qwen/Qwen2.5-0.5B-Instruct"
-    output_dir = "/workspace/storage/test_output"
+    # If your worker node is completely offline, change this model ID string 
+    # to the exact folder path inside your PVC: f"{MODEL_BASE_DIR}/Qwen2.5-0.5B-Instruct"
+    model_id = "Qwen/Qwen2.5-0.5B-Instruct" 
+    
+    output_dir = os.path.join(CHECKPOINT_BASE_DIR, "outputs")
+    tensorboard_log_dir = os.path.join(CHECKPOINT_BASE_DIR, "tensorboard_logs")
 
-    print(f"--- STEP 2: Loading Tokenizer and Model ({model_id}) ---")
+    print(f"--- STEP 2: Loading Tokenizer and Model ---")
     tokenizer = AutoTokenizer.from_pretrained(model_id)
-    # Ensure padding token is set
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
     model = AutoModelForCausalLM.from_pretrained(
         model_id, 
-        torch_dtype=torch.float16 if cuda_available else torch.float32,
+        torch_dtype=torch.bfloat16 if cuda_available else torch.float32,
         device_map="auto" if cuda_available else None
     )
 
-    print("--- STEP 3: Creating Mock Datasets for Testing ---")
-    # Tiny, hardcoded conversational format data
-    mock_data = {
-        "messages": [
-            [
-                {"role": "user", "content": "Hello, can you help me test my local setup?"},
-                {"role": "assistant", "content": "Yes, your local GPU and pipeline configurations are working correctly."}
-            ],
-            [
-                {"role": "user", "content": "What language model are we testing right now?"},
-                {"role": "assistant", "content": "We are currently running a test using Qwen 2.5 0.5B Instruct."}
-            ],
-            [
-                {"role": "user", "content": "Confirm pipeline storage status."},
-                {"role": "assistant", "content": "The storage volume path is correctly mounted to workspace."}
-            ]
-        ]
-    }
+    print("--- STEP 3: Preparing Dataset Context ---")
+    # In production, change this dummy data loader to read your real files out of the dataset volume:
+    # dataset = load_from_disk(os.path.join(DATASET_BASE_DIR, "tokenized_train_data"))
+    mock_data = {"messages": [[
+        {"role": "user", "content": "Hello, can you help me test my local setup?"},
+        {"role": "assistant", "content": "Yes, your local GPU and pipeline configurations are working correctly."}
+    ]]}
     dataset = Dataset.from_dict(mock_data)
 
-    print("--- STEP 4: Configuring SFTTrainer Parameters ---")
-    # Low profiling for fast smoke testing
+    print("--- STEP 4: Setting Up Industry-Standard SFTConfig ---")
     training_args = SFTConfig(
         output_dir=output_dir,
-        max_steps=5,                       # Force exit after 5 steps
-        per_device_train_batch_size=1,      # Lower memory overhead
-        logging_steps=1,                   # Print logs immediately 
-        save_strategy="no",                # Skip intermediate saves for speed
-        learning_rate=2e-5,
-        report_to="none",                  # Turn off external telemetry tracking
-        max_seq_length=512
+        max_steps=10,                      # Low limit for testing execution
+        per_device_train_batch_size=1,
+        gradient_accumulation_steps=4,     # Standard stability approach
+        logging_steps=1,                   # High frequency feedback for smoke test
+        save_strategy="steps",
+        save_steps=5,                      # Verifies that JuiceFS can save weight blocks mid-run
+        save_total_limit=2,                # Keeps your disk clean by purging old checkpoints
+        
+        # --- TensorBoard Configuration ---
+        logging_dir=tensorboard_log_dir,
+        report_to=["tensorboard"],
+        
+        # --- Hardware Optimization ---
+        bf16=cuda_available,               # Use bfloat16 to optimize memory execution on modern GPUs
+        max_seq_length=512,
+        dataset_kwargs={"append_concat_token": False} # Prevents formatting warning alerts in Qwen architectures
     )
 
+    print("--- STEP 5: Initializing Pipeline Trainer ---")
     trainer = SFTTrainer(
-        model=model,
-        train_dataset=dataset,
-        args=training_args,
-        processing_class=tokenizer,
+        model=model, 
+        train_dataset=dataset, 
+        args=training_args, 
+        processing_class=tokenizer  # Modern parameter name replacing deprecated 'tokenizer' keyword
     )
-
-    print("--- STEP 5: Executing Fine-Tuning Job Loop ---")
+    
+    print("--- STEP 6: Commencing Training Pass ---")
     trainer.train()
-
-    print(f"--- STEP 6: Saving Weights to PVC Volume -> {output_dir} ---")
-    os.makedirs(output_dir, exist_ok=True)
-    trainer.save_model(output_dir)
-    print("SUCCESS: Test pipeline completed cleanly.")
+    
+    print(f"SUCCESS: Test complete. Weight matrix snapshots stored to: {output_dir}")
 
 if __name__ == "__main__":
-    run_test()
+    run_production_training()
