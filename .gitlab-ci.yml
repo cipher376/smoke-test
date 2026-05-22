@@ -3,9 +3,9 @@ stages:
 
 build-slm-image:
   stage: build
-  # Kaniko's debug image variant contains a shell interpreter required by GitLab Runner
+  # Switched to the latest stable debug image variant containing the required shell interpreter
   image:
-    name: gcr.io/kaniko-project/executor:v1.20.0-debug
+    name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
 
   variables:
@@ -15,19 +15,20 @@ build-slm-image:
     KUBERNETES_SERVICE_ACCOUNT: "gitlab-runner"
 
   before_script:
-    # Set up Kaniko's configuration matrix matching your custom registry credentials
+    # Ensure kaniko configuration directory exists and save registry credentials
     - mkdir -p /kaniko/.docker
     - echo "{\"auths\":{\"${CUSTOM_REGISTRY}\":{\"username\":\"${CI_REGISTRY_USER}\",\"password\":\"${CI_REGISTRY_PASSWORD}\"}}}" > /kaniko/.docker/config.json
 
   script:
-    # Kaniko untars layers, compiles code, and pushes images completely in user-space
-    - /kaniko/executor \
-      --context "${CI_PROJECT_DIR}" \
-      --dockerfile "${CI_PROJECT_DIR}/Dockerfile" \
-      --destination "${CUSTOM_REGISTRY_IMAGE}:latest" \
-      --destination "${CUSTOM_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}" \
-      --skip-unused-stages \
-      --insecure \
+    # Formatted parameters smoothly using standard array structure for clarity and validation
+    - >
+      /kaniko/executor
+      --context "${CI_PROJECT_DIR}"
+      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
+      --destination "${CUSTOM_REGISTRY_IMAGE}:latest"
+      --destination "${CUSTOM_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}"
+      --skip-unused-stages
+      --insecure
       --insecure-registry "${CUSTOM_REGISTRY}"
 
   rules:
