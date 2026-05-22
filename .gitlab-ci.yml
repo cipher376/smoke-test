@@ -13,11 +13,20 @@ build-slm-image:
     KUBERNETES_SERVICE_ACCOUNT: "gitlab-runner"
   before_script:
     # Buildah requires an isolated storage driver configuration when running inside a container
-    - export STORAGE_DRIVER=vfs
-    - export BUILDAH_ISOLATION=chroot
-    - export BUILDAH_LAYERS=false
-    - mkdir -p /etc/containers
-    - echo -e 'unqualified-search-registries = ["docker.io", "quay.io"]' > /etc/containers/registries.conf
+    # 1. Force the engine to use filesystem-only chroot jail extraction
+    export BUILDAH_ISOLATION=chroot
+    export BUILDAH_LAYERS=false
+    
+    # 2. Redirect the storage engine to a directory owned by the unprivileged user
+    export STORAGE_DRIVER=vfs
+    export CONTAINER_STORAGE_CONF="${CI_PROJECT_DIR}/storage.conf"
+    
+    mkdir -p "${CI_PROJECT_DIR}/containers/storage"
+    echo -e "[storage]\ndriver = \"vfs\"\nrunroot = \"${CI_PROJECT_DIR}/containers/runroot\"\ngraphroot = \"${CI_PROJECT_DIR}/containers/storage\"" > "${CONTAINER_STORAGE_CONF}"
+    
+    # 3. Write search registries configuration locally
+    export CONTAINER_REGISTRIES_CONF="${CI_PROJECT_DIR}/registries.conf"
+    echo -e "unqualified-search-registries = [\"docker.io\", \"quay.io\"]" > "${CONTAINER_REGISTRIES_CONF}"
   script:
     # 1. Pass the tls flag explicitly to the login step
     - buildah login --tls-verify=false --username "${CI_REGISTRY_USER}" --password "${CI_REGISTRY_PASSWORD}" "${CUSTOM_REGISTRY}"
