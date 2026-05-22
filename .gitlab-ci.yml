@@ -12,8 +12,8 @@ build-slm-image:
     KUBERNETES_NAMESPACE: "gitlab-runner"
     KUBERNETES_SERVICE_ACCOUNT: "gitlab-runner"
   before_script:
-    - mkdir -p /etc/ssl/certs
-    - cp "$GITLAB_CA_CERT" /etc/ssl/certs/gitlab-ca.crt
+    # - mkdir -p /etc/ssl/certs
+    # - cp "$GITLAB_CA_CERT" /etc/ssl/certs/gitlab-ca.crt
     # Buildah requires an isolated storage driver configuration when running inside a container
     - export STORAGE_DRIVER=vfs
   script:
