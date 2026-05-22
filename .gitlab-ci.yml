@@ -3,37 +3,32 @@ stages:
 
 build-slm-image:
   stage: build
-  # Official stable Buildah image
-  image: quay.io/buildah/stable:v1.43
+  # Kaniko's debug image variant contains a shell interpreter required by GitLab Runner
+  image:
+    name: gcr.io/kaniko-project/executor:v1.20.0-debug
+    entrypoint: [""]
 
   variables:
     CUSTOM_REGISTRY: "gitlab-registry.ncs-cloud.lan"
     CUSTOM_REGISTRY_IMAGE: "gitlab-registry.ncs-cloud.lan/ml/smoke-test"
     KUBERNETES_NAMESPACE: "gitlab-runner"
     KUBERNETES_SERVICE_ACCOUNT: "gitlab-runner"
-    STORAGE_DRIVER: vfs
-    BUILDAH_ISOLATION: chroot
+
   before_script:
-    # Buildah requires an isolated storage driver configuration when running inside a container
-    - export STORAGE_DRIVER=vfs
-    - export BUILDAH_ISOLATION=chroot
-    - export BUILDAH_LAYERS=false
-    - mkdir -p /etc/containers
-    - echo -e 'unqualified-search-registries = ["docker.io", "quay.io"]' > /etc/containers/registries.conf
+    # Set up Kaniko's configuration matrix matching your custom registry credentials
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"${CUSTOM_REGISTRY}\":{\"username\":\"${CI_REGISTRY_USER}\",\"password\":\"${CI_REGISTRY_PASSWORD}\"}}}" > /kaniko/.docker/config.json
+
   script:
-    # 1. Pass the tls flag explicitly to the login step
-    - buildah login --tls-verify=false --username "${CI_REGISTRY_USER}" --password "${CI_REGISTRY_PASSWORD}" "${CUSTOM_REGISTRY}"
-    
-    # 2. Build the image matrix
-    - buildah bud 
-      --tls-verify=false 
-      --storage-driver=vfs
-      -t "${CUSTOM_REGISTRY_IMAGE}:latest" 
-      -t "${CUSTOM_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}" 
-      "${CI_PROJECT_DIR}"
-    
-    # 3. Push to registry
-    - buildah push --tls-verify=false  --storage-driver=vfs  "${CUSTOM_REGISTRY_IMAGE}:latest"
-    - buildah push --tls-verify=false --storage-driver=vfs "${CUSTOM_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}"
+    # Kaniko untars layers, compiles code, and pushes images completely in user-space
+    - /kaniko/executor \
+      --context "${CI_PROJECT_DIR}" \
+      --dockerfile "${CI_PROJECT_DIR}/Dockerfile" \
+      --destination "${CUSTOM_REGISTRY_IMAGE}:latest" \
+      --destination "${CUSTOM_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}" \
+      --skip-unused-stages \
+      --insecure \
+      --insecure-registry "${CUSTOM_REGISTRY}"
+
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
