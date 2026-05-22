@@ -3,7 +3,6 @@ stages:
 
 build-slm-image:
   stage: build
-  # Switched to Kaniko's latest stable debug image (includes the shell required by GitLab)
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
@@ -15,12 +14,10 @@ build-slm-image:
     KUBERNETES_SERVICE_ACCOUNT: "gitlab-runner"
 
   before_script:
-    # Authenticate to your custom registry by writing the Docker config directly into Kaniko's workspace
     - mkdir -p /kaniko/.docker
     - echo "{\"auths\":{\"${CUSTOM_REGISTRY}\":{\"username\":\"${CI_REGISTRY_USER}\",\"password\":\"${CI_REGISTRY_PASSWORD}\"}}}" > /kaniko/.docker/config.json
 
   script:
-    # Kaniko handles building and pushing multiple tags to your insecure local registry in a single pass
     - >
       /kaniko/executor
       --context "${CI_PROJECT_DIR}"
@@ -30,6 +27,8 @@ build-slm-image:
       --skip-unused-stages
       --insecure
       --insecure-registry "${CUSTOM_REGISTRY}"
+      --skip-tls-verify
+      --registry-mirror "${CUSTOM_REGISTRY}"
 
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
