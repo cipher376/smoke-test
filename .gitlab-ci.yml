@@ -4,7 +4,14 @@ stages:
 build-slm-image:
   stage: build
   # Official stable Buildah image
-  image: quay.io/buildah/stable:v1.35
+  image: quay.io/buildah/stable:v1.43
+
+  variables:
+    CUSTOM_REGISTRY: "gitlab-registry.ncs-cloud.lan"
+    CUSTOM_REGISTRY_IMAGE: "gitlab-registry.ncs-cloud.lan/ml/smoke-test"
+    # FIX 2: Prevents the runner from defaulting or wandering into 'default'
+    KUBERNETES_NAMESPACE: "gitlab-runner"
+    KUBERNETES_SERVICE_ACCOUNT: "gitlab-runner"
   before_script:
     # Buildah requires an isolated storage driver configuration when running inside a container
     - export STORAGE_DRIVER=vfs
