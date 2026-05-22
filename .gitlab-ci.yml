@@ -12,6 +12,7 @@ build-slm-image:
     # FIX 2: Prevents the runner from defaulting or wandering into 'default'
     KUBERNETES_NAMESPACE: "gitlab-runner"
     KUBERNETES_SERVICE_ACCOUNT: "gitlab-runner"
+    KUBERNETES_CONTAINER_VOLUME_MOUNTS: "ca-pemstore:/etc/ssl/certs"
   before_script:
     # Buildah requires an isolated storage driver configuration when running inside a container
     - export STORAGE_DRIVER=vfs
