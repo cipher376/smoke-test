@@ -27,6 +27,7 @@ build-slm-image:
     # 2. Build the image matrix
     - buildah bud 
       --tls-verify=false 
+      --storage-driver=vfs
       -t "${CUSTOM_REGISTRY_IMAGE}:latest" 
       -t "${CUSTOM_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}" 
       "${CI_PROJECT_DIR}"
