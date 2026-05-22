@@ -11,6 +11,8 @@ build-slm-image:
     CUSTOM_REGISTRY_IMAGE: "gitlab-registry.ncs-cloud.lan/ml/smoke-test"
     KUBERNETES_NAMESPACE: "gitlab-runner"
     KUBERNETES_SERVICE_ACCOUNT: "gitlab-runner"
+    STORAGE_DRIVER: vfs
+    BUILDAH_ISOLATION: chroot
   before_script:
     # Buildah requires an isolated storage driver configuration when running inside a container
     - export STORAGE_DRIVER=vfs
