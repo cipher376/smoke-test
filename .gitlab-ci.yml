@@ -33,7 +33,7 @@ build-slm-image:
       "${CI_PROJECT_DIR}"
     
     # 3. Push to registry
-    - buildah push --tls-verify=false "${CUSTOM_REGISTRY_IMAGE}:latest"
-    - buildah push --tls-verify=false "${CUSTOM_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}"
+    - buildah push --tls-verify=false  --storage-driver=vfs  "${CUSTOM_REGISTRY_IMAGE}:latest"
+    - buildah push --tls-verify=false --storage-driver=vfs "${CUSTOM_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}"
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
