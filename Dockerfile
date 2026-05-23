@@ -6,7 +6,17 @@ RUN pip install --no-cache-dir \
     datasets==2.19.0 \
     trl==0.8.6 \
     accelerate==0.29.3 \
-    fsspec==2024.2.0
+    fsspec==2024.2.0 \
+    rich  
+
+# Create cache directory with proper permissions
+RUN mkdir -p /.cache/huggingface && \
+    chmod 777 /.cache
+
+# Set environment variables for cache directories
+ENV HF_HOME=/.cache/huggingface \
+    TRANSFORMERS_CACHE=/.cache/huggingface/hub \
+    HUGGINGFACE_HUB_CACHE=/.cache/huggingface/hub
 
 WORKDIR /workspace
 
