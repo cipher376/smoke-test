@@ -29,6 +29,9 @@ build-slm-image:
       --insecure-registry "${CUSTOM_REGISTRY}"
       --skip-tls-verify
       --registry-mirror "${CUSTOM_REGISTRY}"
+      --push-retry 5
+      --compression gzip
+      --compression-level 1
 
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
