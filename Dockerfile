@@ -2,12 +2,12 @@ FROM pytorch/pytorch:2.2.1-cuda12.1-cudnn8-runtime
 
 # Install minimal deep learning dependencies
 RUN pip install --no-cache-dir \
-    transformers==4.57.3 \
-    datasets==3.6.0 \
-    trl==0.28.0 \
-    accelerate==1.13.0 \
-    fsspec \
-    rich \
+    transformers==4.40.0 \
+    datasets==2.19.0 \
+    trl==0.8.6 \
+    accelerate==0.29.3 \
+    fsspec==2024.2.0 \
+    rich
 
 # Create a user with the same UID as in the securityContext
 RUN useradd -m -u 1000 -s /bin/bash appuser
