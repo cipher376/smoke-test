@@ -6,8 +6,8 @@ RUN pip install --no-cache-dir \
     datasets==3.6.0 \
     trl==0.28.0 \
     accelerate==1.13.0 \
-    fsspec==2025.7.2 \
-    rich==14.3.3
+    fsspec \
+    rich \
 
 # Create a user with the same UID as in the securityContext
 RUN useradd -m -u 1000 -s /bin/bash appuser
