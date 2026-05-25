@@ -32,4 +32,4 @@ RUN chown -R ubuntu:ubuntu /workspace && \
 # Switch to non-root ubuntu
 USER ubuntu
 
-CMD ["python", "/workspace/train.py"]
+CMD ["python", "/workspace/train.py"] 
