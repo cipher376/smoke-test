@@ -10,8 +10,8 @@ build-slm-image:
   variables:
     CUSTOM_REGISTRY: "gitlab-registry.dev.anansecloud.com"
     CUSTOM_REGISTRY_IMAGE: "gitlab-registry.dev.anansecloud.com/ml/smoke-test"
-    KUBERNETES_NAMESPACE: "gitlab-runner"
-    KUBERNETES_SERVICE_ACCOUNT: "gitlab-runner"
+    # KUBERNETES_NAMESPACE: "gitlab-runner"
+    # KUBERNETES_SERVICE_ACCOUNT: "gitlab-runner"
 
   before_script:
     - mkdir -p /kaniko/.docker
@@ -34,4 +34,4 @@ build-slm-image:
       --compression-level 1
 
   rules:
-    - if: $CI_COMMIT_BRANCH == "main"`
+    - if: $CI_COMMIT_BRANCH == "main"
