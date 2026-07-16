@@ -2,7 +2,7 @@
 # build-and-push.sh
 
 # Variables
-REGISTRY="gitlab-registry.ncs-cloud.lan"
+REGISTRY="gitlab-registry.dev.anansecloud.com"
 PROJECT="ml"
 IMAGE="smoke-test"
 TAG="${1:-latest}"
