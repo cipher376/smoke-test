@@ -18,26 +18,25 @@ build-slm-image:
     - echo "{\"auths\":{\"${CUSTOM_REGISTRY}\":{\"username\":\"${CI_REGISTRY_USER}\",\"password\":\"${CI_REGISTRY_PASSWORD}\"}}}" > /kaniko/.docker/config.json
 
   script:
-    - >
-      /kaniko/executor
-      --context "${CI_PROJECT_DIR}"
-      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
-      --destination "${CUSTOM_REGISTRY_IMAGE}:latest"
-      --destination "${CUSTOM_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}"
-      --skip-unused-stages
-      --insecure
-      --insecure-registry "${CUSTOM_REGISTRY}"
-      --skip-tls-verify
-      --registry-mirror "${CUSTOM_REGISTRY}"
-      --push-retry 5
-      --compression gzip
-      --compression-level 1
-      --build-arg http_proxy="http://10.10.0.1:3128" \
-      --build-arg https_proxy="http://10.10.0.1:3128" \
-      --build-arg HTTP_PROXY="http://10.10.0.1:3128" \
-      --build-arg HTTPS_PROXY="http://10.10.0.1:3128" \
-      --build-arg no_proxy="localhost,127.0.0.1,10.96.0.0/12,10.10.0.0/16,172.16.0.0/16,kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster.local,svc,.svc,cluster.local,.cluster.local,anansecloud.com,.anansecloud.com,.dev.anansecloud.com" \
-      --build-arg NO_PROXY="localhost,127.0.0.1,10.96.0.0/12,10.10.0.0/16,172.16.0.0/16,kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster.local,svc,.svc,cluster.local,.cluster.local,anansecloud.com,.anansecloud.com,.dev.anansecloud.com"
-
+    - |
+      /kaniko/executor \
+        --context "${CI_PROJECT_DIR}" \
+        --dockerfile "${CI_PROJECT_DIR}/Dockerfile" \
+        --destination "${CUSTOM_REGISTRY_IMAGE}:latest" \
+        --destination "${CUSTOM_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}" \
+        --skip-unused-stages \
+        --insecure \
+        --insecure-registry "${CUSTOM_REGISTRY}" \
+        --skip-tls-verify \
+        --registry-mirror "${CUSTOM_REGISTRY}" \
+        --push-retry 5 \
+        --compression gzip \
+        --compression-level 1 \
+        --build-arg http_proxy="http://10.10.0.1:3128" \
+        --build-arg https_proxy="http://10.10.0.1:3128" \
+        --build-arg HTTP_PROXY="http://10.10.0.1:3128" \
+        --build-arg HTTPS_PROXY="http://10.10.0.1:3128" \
+        --build-arg no_proxy="localhost,127.0.0.1,10.96.0.0/12,10.10.0.0/16,172.16.0.0/16,kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster.local,svc,.svc,cluster.local,.cluster.local,anansecloud.com,.anansecloud.com,.dev.anansecloud.com" \
+        --build-arg NO_PROXY="localhost,127.0.0.1,10.96.0.0/12,10.10.0.0/16,172.16.0.0/16,kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster.local,svc,.svc,cluster.local,.cluster.local,anansecloud.com,.anansecloud.com,.dev.anansecloud.com"
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
