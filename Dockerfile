@@ -1,6 +1,12 @@
 FROM pytorch/pytorch:2.12.0-cuda12.6-cudnn9-runtime
 
-
+# Declare the proxy arguments so the build environment recognizes them.
+ARG http_proxy
+ARG https_proxy
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
+ARG no_proxy
+ARG NO_PROXY
     
 # Install minimal deep learning dependencies
 RUN pip install --no-cache-dir --break-system-packages  \

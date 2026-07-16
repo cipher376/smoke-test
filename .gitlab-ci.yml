@@ -32,6 +32,12 @@ build-slm-image:
       --push-retry 5
       --compression gzip
       --compression-level 1
+      --build-arg http_proxy="http://10.10.0.1:3128" \
+      --build-arg https_proxy="http://10.10.0.1:3128" \
+      --build-arg HTTP_PROXY="http://10.10.0.1:3128" \
+      --build-arg HTTPS_PROXY="http://10.10.0.1:3128" \
+      --build-arg no_proxy="localhost,127.0.0.1,10.96.0.0/12,10.10.0.0/16,172.16.0.0/16,kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster.local,svc,.svc,cluster.local,.cluster.local,anansecloud.com,.anansecloud.com,.dev.anansecloud.com" \
+      --build-arg NO_PROXY="localhost,127.0.0.1,10.96.0.0/12,10.10.0.0/16,172.16.0.0/16,kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster.local,svc,.svc,cluster.local,.cluster.local,anansecloud.com,.anansecloud.com,.dev.anansecloud.com"
 
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
